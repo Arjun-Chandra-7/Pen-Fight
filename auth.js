@@ -1,0 +1,321 @@
+/* Google Authentication & Developer / God Pen Privileges */
+(function () {
+  const DEVELOPER_EMAILS = [
+    'aarjunchandra@gmail.com',
+    'aviralbg.2911@gmail.com'
+  ];
+
+  function isDevEmail(email) {
+    if (!email) return false;
+    return DEVELOPER_EMAILS.includes(email.trim().toLowerCase());
+  }
+
+  window.isDeveloperAccount = function () {
+    const u = getCurrentUser();
+    return u && (u.isDev || isDevEmail(u.email));
+  };
+
+  function getCurrentUser() {
+    try {
+      const raw = localStorage.getItem('lastBenchUser');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      email: '',
+      name: 'Guest Player',
+      picture: '',
+      isDev: false,
+      isGuest: true
+    };
+  }
+
+  function saveUser(user) {
+    localStorage.setItem('lastBenchUser', JSON.stringify(user));
+  }
+
+  // Parse JWT token from Google Identity Services
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Failed to parse JWT', e);
+      return null;
+    }
+  }
+
+  // Grant developer perks: all pens unlocked + protected, Madara Uchiha God Pen
+  window.applyDeveloperPerks = function () {
+    const isDev = window.isDeveloperAccount();
+    if (isDev) {
+      // Ensure all pens are registered
+      const allPenKeys = ['sky', 'brick', 'violet', 'gold', 'mint', 'graphite', 'madara'];
+      allPenKeys.forEach(k => {
+        if (window.PEN && window.PEN[k]) {
+          window.PEN[k].owned = true;
+          window.PEN[k].protected = true;
+        }
+        if (window.save && window.save.owned && !window.save.owned.includes(k)) {
+          window.save.owned.push(k);
+        }
+      });
+      if (window.save) {
+        window.save.quest = 5;
+      }
+      if (typeof window.persist === 'function') window.persist();
+      if (typeof window.renderCase === 'function') window.renderCase();
+    }
+  };
+
+  function handleAuthSuccess(email, name, picture) {
+    const isDev = isDevEmail(email);
+    const user = {
+      email: email.trim().toLowerCase(),
+      name: name || email.split('@')[0],
+      picture: picture || '',
+      isDev: isDev,
+      isGuest: false
+    };
+
+    saveUser(user);
+    updateAuthUI();
+    closeModal('#authModal');
+
+    if (isDev) {
+      window.applyDeveloperPerks();
+      if (typeof toast === 'function') {
+        toast(`⚡ DEVELOPER AUTHENTICATED: All Pens & Madara God Pen Unlocked!`);
+      }
+    } else {
+      if (typeof toast === 'function') {
+        toast(`✦ Welcome, ${user.name}! Signed in via Google.`);
+      }
+      if (typeof window.renderCase === 'function') window.renderCase();
+    }
+  }
+
+  // Google credential response callback
+  window.handleGoogleCredentialResponse = function (response) {
+    if (!response || !response.credential) return;
+    const payload = parseJwt(response.credential);
+    if (payload && payload.email) {
+      handleAuthSuccess(payload.email, payload.name, payload.picture);
+    }
+  };
+
+  function updateAuthUI() {
+    const user = getCurrentUser();
+    const authContainer = document.getElementById('authContainer');
+    if (!authContainer) return;
+
+    const isDev = user.isDev || isDevEmail(user.email);
+
+    if (user.isGuest || !user.email) {
+      authContainer.innerHTML = `
+        <button id="signInBtn" class="google-login-btn" title="Sign in with Google">
+          <svg class="google-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Sign In</span>
+        </button>
+      `;
+      const btn = document.getElementById('signInBtn');
+      if (btn) btn.onclick = () => openModal('#authModal');
+    } else {
+      const avatarHtml = user.picture
+        ? `<img class="user-avatar-img" src="${user.picture}" alt="${user.name}">`
+        : `<div class="user-avatar-img">${(user.name || 'U')[0].toUpperCase()}</div>`;
+
+      const badgeHtml = isDev
+        ? `<span class="dev-badge-tag">👑 DEV / UCHIHA</span>`
+        : '';
+
+      authContainer.innerHTML = `
+        <button id="userProfileBtn" class="user-profile-btn" title="View Account">
+          ${avatarHtml}
+          <span class="user-name-text">${user.name}</span>
+          ${badgeHtml}
+        </button>
+      `;
+
+      const pBtn = document.getElementById('userProfileBtn');
+      if (pBtn) pBtn.onclick = () => showUserProfileModal(user);
+    }
+  }
+
+  function showUserProfileModal(user) {
+    const isDev = user.isDev || isDevEmail(user.email);
+    const modal = document.getElementById('profileModal');
+    if (!modal) return;
+
+    const avatarLarge = document.getElementById('profileModalAvatar');
+    if (avatarLarge) {
+      avatarLarge.innerHTML = user.picture
+        ? `<img src="${user.picture}" alt="${user.name}">`
+        : `<span>${(user.name || 'U')[0].toUpperCase()}</span>`;
+    }
+
+    const nameEl = document.getElementById('profileModalName');
+    if (nameEl) nameEl.textContent = user.name;
+
+    const emailEl = document.getElementById('profileModalEmail');
+    if (emailEl) emailEl.textContent = user.email;
+
+    const perksEl = document.getElementById('profileModalPerks');
+    if (perksEl) {
+      if (isDev) {
+        perksEl.innerHTML = `
+          <div class="profile-perk-item"><span class="icon">👑</span> <b>Developer Status:</b> Verified Admin</div>
+          <div class="profile-perk-item"><span class="icon">⚡</span> <b>God Pen:</b> Madara Uchiha (Susanoo Active)</div>
+          <div class="profile-perk-item"><span class="icon">🛡️</span> <b>Desk Immunity:</b> All pens 100% protected on loss</div>
+          <div class="profile-perk-item"><span class="icon">🔓</span> <b>Armory:</b> All 7 pens unlocked</div>
+        `;
+      } else {
+        perksEl.innerHTML = `
+          <div class="profile-perk-item"><span class="icon">👤</span> <b>Rank:</b> Classroom Challenger</div>
+          <div class="profile-perk-item"><span class="icon">💾</span> <b>Cloud Save:</b> Synced to Google Account</div>
+          <div class="profile-perk-item"><span class="icon">✒️</span> <b>Starter Pen:</b> Cello Butterflow (Protected)</div>
+        `;
+      }
+    }
+
+    openModal('#profileModal');
+  }
+
+  function openModal(sel) {
+    const el = document.querySelector(sel);
+    if (el) el.classList.remove('hidden');
+  }
+
+  function closeModal(sel) {
+    const el = document.querySelector(sel);
+    if (el) el.classList.add('hidden');
+  }
+
+  // Setup Google Identity Services Button
+  function initGSI() {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: '1058284557997-penfight.apps.googleusercontent.com',
+          callback: window.handleGoogleCredentialResponse,
+          auto_select: false
+        });
+        const gBtn = document.getElementById('g_id_signin');
+        if (gBtn) {
+          window.google.accounts.id.renderButton(gBtn, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            text: 'signin_with',
+            shape: 'rectangular',
+            logo_alignment: 'left'
+          });
+        }
+      } catch (e) {
+        console.warn('GSI init note:', e);
+      }
+    }
+  }
+
+  // Cheat code system: typing "madara" or "susanoo" unlocks God Pen
+  let typedBuffer = '';
+  window.addEventListener('keydown', e => {
+    // Ignore input if user is typing in a text field
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-12);
+    if (typedBuffer.includes('madara') || typedBuffer.includes('susanoo') || typedBuffer.includes('uchiha')) {
+      typedBuffer = '';
+      if (window.PEN && window.PEN.madara) {
+        window.PEN.madara.owned = true;
+        window.PEN.madara.protected = true;
+        if (window.save && !window.save.owned.includes('madara')) {
+          window.save.owned.push('madara');
+        }
+        if (typeof window.persist === 'function') window.persist();
+        if (typeof window.renderCase === 'function') window.renderCase();
+        if (typeof toast === 'function') {
+          toast('✦ SHARINGAN AWAKENED: Madara Uchiha God Pen Unlocked! ✦');
+        }
+        if (typeof tap === 'function') tap(0.08);
+      }
+    }
+  });
+
+  // DOM ready attachment
+  document.addEventListener('DOMContentLoaded', () => {
+    updateAuthUI();
+
+    // Check if current user is developer and apply perks immediately
+    if (window.isDeveloperAccount()) {
+      window.applyDeveloperPerks();
+    }
+
+    // Modal close buttons
+    document.querySelectorAll('[data-close-modal]').forEach(b => {
+      b.onclick = () => {
+        const target = b.dataset.closeModal;
+        closeModal('#' + target);
+      };
+    });
+
+    // Developer Quick Sign-In Buttons
+    document.querySelectorAll('.dev-auth-btn').forEach(btn => {
+      btn.onclick = () => {
+        const email = btn.dataset.email;
+        const name = btn.dataset.name;
+        handleAuthSuccess(email, name);
+      };
+    });
+
+    // Custom Google Email Form
+    const customForm = document.getElementById('customAuthForm');
+    if (customForm) {
+      customForm.onsubmit = e => {
+        e.preventDefault();
+        const input = document.getElementById('customEmailInput');
+        if (input && input.value) {
+          const email = input.value.trim();
+          handleAuthSuccess(email, email.split('@')[0]);
+          input.value = '';
+        }
+      };
+    }
+
+    // Sign Out Button
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) {
+      signOutBtn.onclick = () => {
+        localStorage.removeItem('lastBenchUser');
+        closeModal('#profileModal');
+        updateAuthUI();
+        if (typeof toast === 'function') toast('Signed out. Playing as Guest.');
+        location.reload();
+      };
+    }
+
+    // Try initializing Google GSI after a slight delay to let script load
+    setTimeout(initGSI, 500);
+    setTimeout(initGSI, 1500);
+  });
+
+  // Also run UI update on direct script load
+  if (document.readyState !== 'loading') {
+    updateAuthUI();
+    if (window.isDeveloperAccount()) {
+      window.applyDeveloperPerks();
+    }
+  }
+})();

@@ -1,0 +1,381 @@
+/* Google Auth & Developer / God Pen Styles */
+.auth-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.google-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 4px;
+  padding: 6px 12px !important;
+  font: 500 13px 'DM Mono', monospace !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.google-login-btn:hover {
+  background: #f8f9fa !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+  transform: translateY(-1px);
+}
+
+.google-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.user-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 24, 18, 0.85) !important;
+  border: 1px solid #d8b994aa !important;
+  border-radius: 20px !important;
+  padding: 4px 10px 4px 5px !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-profile-btn:hover {
+  background: rgba(45, 36, 26, 0.95) !important;
+  border-color: #ffdb9a !important;
+}
+
+.user-avatar-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #ffdb9a;
+  background: #203d86;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.user-name-text {
+  font: 600 12px Oswald, sans-serif;
+  letter-spacing: 0.5px;
+  color: #fff0d4;
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dev-badge-tag {
+  background: linear-gradient(135deg, #d34730 0%, #7209b7 100%);
+  color: #fff;
+  font: 700 9px 'DM Mono', monospace;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px #000;
+  box-shadow: 0 0 8px rgba(211, 71, 48, 0.6);
+  animation: devBadgePulse 2.5s infinite;
+}
+
+@keyframes devBadgePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(211, 71, 48, 0.5); }
+  50% { box-shadow: 0 0 14px rgba(114, 9, 183, 0.9), 0 0 8px rgba(255, 0, 85, 0.7); }
+}
+
+/* Auth Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 15, 12, 0.82);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-panel {
+  width: min(520px, 94vw);
+  padding: 40px 38px 32px;
+  text-align: center;
+  position: relative;
+}
+
+.auth-panel h2 {
+  font-size: 38px;
+  margin: 2px 0 10px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  color: #798aa8;
+  font: 11px 'DM Mono', monospace;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed #a3b8d6;
+}
+
+.auth-divider span {
+  padding: 0 10px;
+}
+
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 6px;
+}
+
+.auth-section-label {
+  font: 600 11px 'DM Mono', monospace;
+  color: #1e3a78;
+  letter-spacing: 1px;
+  text-align: left;
+  margin: 0 0 8px;
+}
+
+.dev-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fdfbf4;
+  border: 1.5px solid #bd9b70;
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-align: left;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.dev-auth-btn:hover {
+  background: #fff8eb;
+  border-color: #d34730;
+  box-shadow: 0 4px 10px rgba(211, 71, 48, 0.2);
+  transform: translateY(-2px);
+}
+
+.badge-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.dev-btn-text b {
+  display: block;
+  font: 600 15px Oswald, sans-serif;
+  color: #203d86;
+}
+
+.dev-btn-text small {
+  display: block;
+  font: 11px 'DM Mono', monospace;
+  color: #7a8aa8;
+}
+
+.custom-auth-section {
+  margin-top: 16px;
+}
+
+.custom-auth-form {
+  display: flex;
+  gap: 8px;
+}
+
+.custom-auth-form input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #9db3d3;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font: 13px 'DM Mono', monospace;
+  color: #1a3365;
+  outline: none;
+}
+
+.custom-auth-form input:focus {
+  border-color: #203d86;
+  box-shadow: 0 0 0 2px rgba(32, 61, 134, 0.2);
+}
+
+.stamp-button-small {
+  background: var(--red);
+  color: #fff9e6;
+  border: 0;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font: 600 14px Oswald, sans-serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.stamp-button-small:hover {
+  background: #b53825;
+  transform: translateY(-1px);
+}
+
+/* User Profile Modal */
+.profile-modal-card {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.profile-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  border: 3px solid #d34730;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #fff;
+  background: #203d86;
+  overflow: hidden;
+}
+
+.profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-name {
+  font: 700 24px Oswald, sans-serif;
+  color: #203d86;
+  margin: 0 0 4px;
+}
+
+.profile-email {
+  font: 12px 'DM Mono', monospace;
+  color: #6a7c9f;
+  margin: 0 0 16px;
+}
+
+.profile-perks-list {
+  background: #fffdf5;
+  border: 1px solid #d8cba8;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.profile-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 13px Kalam, cursive;
+  color: #17366f;
+  margin-bottom: 6px;
+}
+
+.profile-perk-item:last-child {
+  margin-bottom: 0;
+}
+
+.profile-perk-item span.icon {
+  font-size: 16px;
+  color: #d34730;
+}
+
+.signout-btn {
+  background: #475569;
+  color: #fff;
+  border: 0;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font: 600 14px Oswald;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signout-btn:hover {
+  background: #334155;
+}
+
+/* GOD PEN SPECIAL STYLING */
+.pen-card.god-tier {
+  background: linear-gradient(145deg, #1b0918 0%, #2b0c20 50%, #0d0612 100%) !important;
+  border: 2px solid #ff1744 !important;
+  color: #fff !important;
+  box-shadow: 0 0 16px rgba(255, 23, 68, 0.4), inset 0 0 12px rgba(114, 9, 183, 0.5) !important;
+  position: relative;
+  overflow: hidden;
+  animation: godCardGlow 3s infinite alternate;
+}
+
+@keyframes godCardGlow {
+  0% {
+    box-shadow: 0 0 12px rgba(255, 23, 68, 0.35), inset 0 0 8px rgba(114, 9, 183, 0.3);
+    border-color: #ff1744;
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(138, 43, 226, 0.7), 0 0 12px rgba(255, 0, 77, 0.6), inset 0 0 16px rgba(255, 0, 77, 0.4);
+    border-color: #f72585;
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(255, 23, 68, 0.5), inset 0 0 12px rgba(114, 9, 183, 0.5);
+    border-color: #ff1744;
+  }
+}
+
+.pen-card.god-tier::before {
+  content: '⚡ GOD TIER';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(90deg, #d90429, #7209b7);
+  color: #fff;
+  font: 700 8px 'DM Mono', monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  z-index: 2;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.8);
+}
+
+.pen-card.god-tier b {
+  color: #ffb4a2 !important;
+  text-shadow: 0 0 8px rgba(255, 60, 60, 0.6);
+}
+
+.pen-card.god-tier small {
+  color: #e0aaff !important;
+}
+
+.pen-card.god-tier .stats {
+  color: #ff758f !important;
+}
+
+.pen-card.god-tier .case-pen-stage {
+  background: radial-gradient(ellipse at 50% 50%, #3a0d28 0%, #150519 100%) !important;
+  border-color: #7209b7 !important;
+}
+
+.pen-card.god-tier .case-pen {
+  filter: drop-shadow(0 0 8px #ff0055) drop-shadow(0 0 14px #7209b7) !important;
+}
