@@ -107,10 +107,10 @@
 
 /* Material Design Google Sign In Card */
 .google-auth-card {
-  width: min(448px, 94vw);
+  width: min(450px, 94vw);
   background: #ffffff;
   border-radius: 8px;
-  padding: 40px 36px 36px;
+  padding: 38px 36px 32px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   position: relative;
   font-family: 'Google Sans', Roboto, Arial, sans-serif;
@@ -126,8 +126,8 @@
 
 .google-modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   background: none;
   border: 0;
   color: #5f6368;
@@ -148,17 +148,17 @@
 }
 
 .google-card-header {
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .google-logo-big {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 14px;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
 }
 
 .google-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 500;
   color: #202124;
   margin: 0 0 6px;
@@ -166,15 +166,61 @@
 }
 
 .google-subtitle {
-  font-size: 14px;
+  font-size: 13.5px;
   color: #5f6368;
   margin: 0;
   line-height: 1.4;
 }
 
-.google-subtitle b {
-  color: #202124;
-  font-weight: 600;
+/* Prominent Google OAuth Button */
+.google-oauth-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #ffffff;
+  color: #3c4043;
+  border: 1.5px solid #dadce0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font: 500 14px 'Google Sans', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.google-oauth-btn:hover {
+  background: #f8f9fa;
+  border-color: #1a73e8;
+  box-shadow: 0 2px 8px rgba(26,115,232,0.25);
+  transform: translateY(-1px);
+}
+
+.google-icon-oauth {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  color: #80868b;
+  font: 11px 'Google Sans', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #dadce0;
+}
+
+.auth-divider span {
+  padding: 0 10px;
 }
 
 .google-form {
@@ -184,15 +230,15 @@
 
 .google-input-group {
   position: relative;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
 
 .google-input {
   width: 100%;
   box-sizing: border-box;
-  height: 52px;
-  padding: 14px 16px;
-  font-size: 15px;
+  height: 48px;
+  padding: 12px 14px;
+  font-size: 14px;
   font-family: 'Roboto', 'Google Sans', sans-serif;
   color: #202124;
   background: #fff;
@@ -209,9 +255,9 @@
 
 .google-label {
   position: absolute;
-  left: 14px;
-  top: 16px;
-  font-size: 14px;
+  left: 12px;
+  top: 14px;
+  font-size: 13px;
   color: #5f6368;
   background: #fff;
   padding: 0 4px;
@@ -221,47 +267,26 @@
 
 .google-input:focus ~ .google-label,
 .google-input:not(:placeholder-shown) ~ .google-label {
-  top: -9px;
-  font-size: 12px;
+  top: -8px;
+  font-size: 11px;
   color: #1a73e8;
   font-weight: 500;
-}
-
-.google-help-link {
-  margin-bottom: 20px;
-}
-
-.google-help-link a {
-  color: #1a73e8;
-  font-size: 13px;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.google-help-link a:hover {
-  text-decoration: underline;
-}
-
-.google-disclaimer {
-  font-size: 13px;
-  line-height: 1.45;
-  color: #5f6368;
-  margin: 0 0 32px;
 }
 
 .google-form-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 4px;
 }
 
 .google-btn-text {
   background: none;
   border: 0;
   color: #1a73e8;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s;
@@ -276,9 +301,8 @@
   color: #ffffff;
   border: 0;
   border-radius: 4px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 10px 22px;
+  font: 500 14px 'Google Sans', Roboto, sans-serif;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(60,64,67,0.3);
   transition: background 0.15s, box-shadow 0.15s;
@@ -289,8 +313,51 @@
   box-shadow: 0 1px 3px rgba(60,64,67,0.4);
 }
 
-.google-btn-primary:active {
-  background: #0d47a1;
+/* Client ID Settings */
+.client-id-settings {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed #dadce0;
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: #5f6368;
+  margin: 0 0 8px;
+}
+
+.client-id-form {
+  display: flex;
+  gap: 8px;
+}
+
+.client-id-input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  outline: none;
+}
+
+.client-id-input:focus {
+  border-color: #1a73e8;
+}
+
+.google-btn-save {
+  background: #3c4043;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.google-btn-save:hover {
+  background: #202124;
 }
 
 /* User Profile Modal */

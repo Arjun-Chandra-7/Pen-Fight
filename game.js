@@ -41,9 +41,7 @@ function drawPen(p){
   cx.translate(p.x,p.y);
   cx.rotate(p.a);
   if(p.id==='madara'){
-    cx.shadowColor='#e63946';cx.shadowBlur=16;cx.shadowOffsetY=0;
-    cx.strokeStyle='rgba(255,42,109,0.7)';cx.lineWidth=3;
-    cx.beginPath();cx.roundRect(-66,-14,126,28,14);cx.stroke();
+    cx.shadowColor='#e63946';cx.shadowBlur=14;cx.shadowOffsetY=0;
   } else {
     cx.shadowColor='#1a0d08aa';cx.shadowBlur=8;cx.shadowOffsetY=7;
   }

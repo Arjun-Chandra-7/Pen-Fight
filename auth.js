@@ -1,8 +1,15 @@
-/* Google Authentication & Private Developer Verification */
+/* Google OAuth 2.0 & Private Developer Authentication System */
 (function () {
   const DEVELOPER_EMAILS = [
     'aarjunchandra@gmail.com',
     'aviralbg.2911@gmail.com'
+  ];
+
+  const DEV_PASSCODES = [
+    'uchihamadara7',
+    'developer7',
+    'madara',
+    'arjun2026'
   ];
 
   function isDevEmail(email) {
@@ -35,6 +42,14 @@
     localStorage.setItem('lastBenchUser', JSON.stringify(user));
   }
 
+  function getGoogleClientId() {
+    return localStorage.getItem('last_bench_google_client_id') || '';
+  }
+
+  function setGoogleClientId(id) {
+    localStorage.setItem('last_bench_google_client_id', (id || '').trim());
+  }
+
   // Grant developer perks: all pens unlocked + protected, Madara Uchiha God Pen
   window.applyDeveloperPerks = function () {
     const isDev = window.isDeveloperAccount();
@@ -64,7 +79,7 @@
     return local.charAt(0).toUpperCase() + local.slice(1);
   }
 
-  function handleAuthSuccess(email, name, picture) {
+  function handleAuthSuccess(email, name, picture, isOAuth) {
     const normalizedEmail = (email || '').trim().toLowerCase();
     const isDev = isDevEmail(normalizedEmail);
     const displayName = name || formatNameFromEmail(normalizedEmail);
@@ -74,6 +89,7 @@
       name: displayName,
       picture: picture || '',
       isDev: isDev,
+      isOAuth: !!isOAuth,
       isGuest: false
     };
 
@@ -88,9 +104,57 @@
       }
     } else {
       if (typeof toast === 'function') {
-        toast(`✦ Welcome, ${user.name}! Signed in with Google.`);
+        toast(`✦ Welcome, ${user.name}! Signed in via Google.`);
       }
       if (typeof window.renderCase === 'function') window.renderCase();
+    }
+  }
+
+  // Real Google OAuth Popup flow
+  function triggerGoogleOAuthPopup() {
+    const clientId = getGoogleClientId();
+    if (!clientId) {
+      // Toggle settings accordion and show guidance
+      const settings = document.getElementById('clientIdSettings');
+      if (settings) settings.classList.remove('hidden');
+      const input = document.getElementById('clientIdInput');
+      if (input) input.focus();
+      if (typeof toast === 'function') {
+        toast('Paste your Google Cloud OAuth Client ID below to connect Google popup.');
+      }
+      return;
+    }
+
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              })
+              .then(res => res.json())
+              .then(userInfo => {
+                if (userInfo && userInfo.email) {
+                  handleAuthSuccess(userInfo.email, userInfo.name, userInfo.picture, true);
+                }
+              })
+              .catch(err => {
+                console.error('Google userinfo error:', err);
+                if (typeof toast === 'function') toast('Failed to fetch Google profile. Please try again.');
+              });
+            }
+          }
+        });
+        client.requestAccessToken({ prompt: 'select_account' });
+      } catch (e) {
+        console.error('Google OAuth init error:', e);
+        if (typeof toast === 'function') toast('Google OAuth error: ' + (e.message || 'Check Client ID'));
+      }
+    } else {
+      if (typeof toast === 'function') toast('Google Identity Services SDK is loading...');
     }
   }
 
@@ -227,6 +291,52 @@
       };
     });
 
+    // Google OAuth Popup Button
+    const oauthBtn = document.getElementById('googleOAuthPopupBtn');
+    if (oauthBtn) {
+      oauthBtn.onclick = triggerGoogleOAuthPopup;
+    }
+
+    // Toggle Client ID settings
+    const toggleClientIdBtn = document.getElementById('toggleClientIdBtn');
+    if (toggleClientIdBtn) {
+      toggleClientIdBtn.onclick = () => {
+        const settings = document.getElementById('clientIdSettings');
+        if (settings) settings.classList.toggle('hidden');
+      };
+    }
+
+    // Save Client ID
+    const saveClientIdBtn = document.getElementById('saveClientIdBtn');
+    if (saveClientIdBtn) {
+      const clientIdInput = document.getElementById('clientIdInput');
+      if (clientIdInput) clientIdInput.value = getGoogleClientId();
+      saveClientIdBtn.onclick = () => {
+        if (clientIdInput) {
+          setGoogleClientId(clientIdInput.value);
+          if (typeof toast === 'function') toast('Google OAuth Client ID saved!');
+        }
+      };
+    }
+
+    // Dynamic Developer Passcode group toggle
+    const emailInput = document.getElementById('googleEmailInput');
+    const passcodeGroup = document.getElementById('devPasscodeGroup');
+    if (emailInput && passcodeGroup) {
+      emailInput.addEventListener('input', () => {
+        const val = emailInput.value.trim().toLowerCase();
+        if (isDevEmail(val)) {
+          passcodeGroup.classList.remove('hidden');
+          const pInput = document.getElementById('devPasscodeInput');
+          if (pInput) pInput.required = true;
+        } else {
+          passcodeGroup.classList.add('hidden');
+          const pInput = document.getElementById('devPasscodeInput');
+          if (pInput) pInput.required = false;
+        }
+      });
+    }
+
     // Google Sign-In Form Handler
     const googleForm = document.getElementById('googleSignInForm');
     if (googleForm) {
@@ -234,9 +344,19 @@
         e.preventDefault();
         const input = document.getElementById('googleEmailInput');
         if (input && input.value) {
-          const email = input.value.trim();
+          const email = input.value.trim().toLowerCase();
+          if (isDevEmail(email)) {
+            const pInput = document.getElementById('devPasscodeInput');
+            const code = pInput ? pInput.value.trim() : '';
+            if (!DEV_PASSCODES.includes(code)) {
+              if (typeof toast === 'function') toast('❌ Invalid Developer Secret Key. Access denied.');
+              return;
+            }
+          }
           handleAuthSuccess(email);
           input.value = '';
+          const pInput = document.getElementById('devPasscodeInput');
+          if (pInput) pInput.value = '';
         }
       };
     }

@@ -109,15 +109,10 @@ window.drawPen = function (p) {
   cx.rotate(p.a + Math.PI);
   
   if (isGod) {
-    const pulse = (Math.sin(Date.now() * 0.007) + 1) * 0.5;
+    // Natural glowing aura without any box outline
     cx.shadowColor = '#ff0055';
-    cx.shadowBlur = 18 + pulse * 12;
+    cx.shadowBlur = 14;
     cx.shadowOffsetY = 0;
-    cx.strokeStyle = `rgba(180, 20, 255, ${0.45 + pulse * 0.45})`;
-    cx.lineWidth = 3.5 + pulse * 2;
-    cx.beginPath();
-    cx.roundRect(-78, -27, 156, 54, 14);
-    cx.stroke();
   } else {
     cx.shadowColor = 'rgba(0,0,0,.68)';
     cx.shadowBlur = 10;
@@ -129,16 +124,6 @@ window.drawPen = function (p) {
   } else {
     cx.fillStyle = PEN[p.id]?.color || '#178ec8';
     cx.fillRect(-60, -9, 120, 18);
-  }
-  
-  if (isGod) {
-    // Sharingan Tomoe Eye energy glow at the nib & center
-    cx.fillStyle = '#ff1744';
-    cx.shadowColor = '#ff0044';
-    cx.shadowBlur = 10;
-    cx.beginPath();
-    cx.arc(0, 0, 4.5, 0, Math.PI * 2);
-    cx.fill();
   }
   
   cx.restore();
