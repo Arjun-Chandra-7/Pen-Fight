@@ -1,4 +1,4 @@
-/* Google Authentication & Developer / God Pen Privileges */
+/* Google Authentication & Private Developer Account Verification */
 (function () {
   const DEVELOPER_EMAILS = [
     'aarjunchandra@gmail.com',
@@ -57,7 +57,6 @@
   window.applyDeveloperPerks = function () {
     const isDev = window.isDeveloperAccount();
     if (isDev) {
-      // Ensure all pens are registered
       const allPenKeys = ['sky', 'brick', 'violet', 'gold', 'mint', 'graphite', 'madara'];
       allPenKeys.forEach(k => {
         if (window.PEN && window.PEN[k]) {
@@ -77,10 +76,13 @@
   };
 
   function handleAuthSuccess(email, name, picture) {
-    const isDev = isDevEmail(email);
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const isDev = isDevEmail(normalizedEmail);
+    const displayName = name || normalizedEmail.split('@')[0];
+
     const user = {
-      email: email.trim().toLowerCase(),
-      name: name || email.split('@')[0],
+      email: normalizedEmail,
+      name: displayName,
       picture: picture || '',
       isDev: isDev,
       isGuest: false
@@ -93,7 +95,7 @@
     if (isDev) {
       window.applyDeveloperPerks();
       if (typeof toast === 'function') {
-        toast(`⚡ DEVELOPER AUTHENTICATED: All Pens & Madara God Pen Unlocked!`);
+        toast(`⚡ DEVELOPER VERIFIED: Welcome, ${user.name}! All Pens & Madara God Pen Active.`);
       }
     } else {
       if (typeof toast === 'function') {
@@ -139,7 +141,7 @@
         : `<div class="user-avatar-img">${(user.name || 'U')[0].toUpperCase()}</div>`;
 
       const badgeHtml = isDev
-        ? `<span class="dev-badge-tag">👑 DEV / UCHIHA</span>`
+        ? `<span class="dev-badge-tag">👑 DEVELOPER</span>`
         : '';
 
       authContainer.innerHTML = `
@@ -178,9 +180,9 @@
       if (isDev) {
         perksEl.innerHTML = `
           <div class="profile-perk-item"><span class="icon">👑</span> <b>Developer Status:</b> Verified Admin</div>
-          <div class="profile-perk-item"><span class="icon">⚡</span> <b>God Pen:</b> Madara Uchiha (Susanoo Active)</div>
-          <div class="profile-perk-item"><span class="icon">🛡️</span> <b>Desk Immunity:</b> All pens 100% protected on loss</div>
-          <div class="profile-perk-item"><span class="icon">🔓</span> <b>Armory:</b> All 7 pens unlocked</div>
+          <div class="profile-perk-item"><span class="icon">⚡</span> <b>God Pen:</b> Madara Uchiha (Susanoo Edition)</div>
+          <div class="profile-perk-item"><span class="icon">🛡️</span> <b>Desk Immunity:</b> All pens 100% protected against loss</div>
+          <div class="profile-perk-item"><span class="icon">🔓</span> <b>Armory:</b> All pens unlocked in pencil case</div>
         `;
       } else {
         perksEl.innerHTML = `
@@ -230,13 +232,12 @@
     }
   }
 
-  // Cheat code system: typing "madara" or "susanoo" unlocks God Pen
+  // Secret cheat code listener (for developer testing)
   let typedBuffer = '';
   window.addEventListener('keydown', e => {
-    // Ignore input if user is typing in a text field
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-12);
-    if (typedBuffer.includes('madara') || typedBuffer.includes('susanoo') || typedBuffer.includes('uchiha')) {
+    if (typedBuffer.includes('madara') || typedBuffer.includes('susanoo') || typedBuffer.includes('godmode')) {
       typedBuffer = '';
       if (window.PEN && window.PEN.madara) {
         window.PEN.madara.owned = true;
@@ -258,7 +259,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
 
-    // Check if current user is developer and apply perks immediately
     if (window.isDeveloperAccount()) {
       window.applyDeveloperPerks();
     }
@@ -268,15 +268,6 @@
       b.onclick = () => {
         const target = b.dataset.closeModal;
         closeModal('#' + target);
-      };
-    });
-
-    // Developer Quick Sign-In Buttons
-    document.querySelectorAll('.dev-auth-btn').forEach(btn => {
-      btn.onclick = () => {
-        const email = btn.dataset.email;
-        const name = btn.dataset.name;
-        handleAuthSuccess(email, name);
       };
     });
 
@@ -306,12 +297,10 @@
       };
     }
 
-    // Try initializing Google GSI after a slight delay to let script load
     setTimeout(initGSI, 500);
     setTimeout(initGSI, 1500);
   });
 
-  // Also run UI update on direct script load
   if (document.readyState !== 'loading') {
     updateAuthUI();
     if (window.isDeveloperAccount()) {
