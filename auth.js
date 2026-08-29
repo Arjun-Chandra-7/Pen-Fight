@@ -1,4 +1,4 @@
-/* Google Authentication & Private Developer Account Verification */
+/* Google Authentication & Private Developer Verification */
 (function () {
   const DEVELOPER_EMAILS = [
     'aarjunchandra@gmail.com',
@@ -35,24 +35,6 @@
     localStorage.setItem('lastBenchUser', JSON.stringify(user));
   }
 
-  // Parse JWT token from Google Identity Services
-  function parseJwt(token) {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      console.error('Failed to parse JWT', e);
-      return null;
-    }
-  }
-
   // Grant developer perks: all pens unlocked + protected, Madara Uchiha God Pen
   window.applyDeveloperPerks = function () {
     const isDev = window.isDeveloperAccount();
@@ -75,10 +57,17 @@
     }
   };
 
+  function formatNameFromEmail(email) {
+    if (email.toLowerCase().includes('aarjunchandra')) return 'Arjun Chandra';
+    if (email.toLowerCase().includes('aviral')) return 'Aviral';
+    const local = email.split('@')[0];
+    return local.charAt(0).toUpperCase() + local.slice(1);
+  }
+
   function handleAuthSuccess(email, name, picture) {
     const normalizedEmail = (email || '').trim().toLowerCase();
     const isDev = isDevEmail(normalizedEmail);
-    const displayName = name || normalizedEmail.split('@')[0];
+    const displayName = name || formatNameFromEmail(normalizedEmail);
 
     const user = {
       email: normalizedEmail,
@@ -99,20 +88,11 @@
       }
     } else {
       if (typeof toast === 'function') {
-        toast(`✦ Welcome, ${user.name}! Signed in via Google.`);
+        toast(`✦ Welcome, ${user.name}! Signed in with Google.`);
       }
       if (typeof window.renderCase === 'function') window.renderCase();
     }
   }
-
-  // Google credential response callback
-  window.handleGoogleCredentialResponse = function (response) {
-    if (!response || !response.credential) return;
-    const payload = parseJwt(response.credential);
-    if (payload && payload.email) {
-      handleAuthSuccess(payload.email, payload.name, payload.picture);
-    }
-  };
 
   function updateAuthUI() {
     const user = getCurrentUser();
@@ -179,7 +159,7 @@
     if (perksEl) {
       if (isDev) {
         perksEl.innerHTML = `
-          <div class="profile-perk-item"><span class="icon">👑</span> <b>Developer Status:</b> Verified Admin</div>
+          <div class="profile-perk-item"><span class="icon">👑</span> <b>Developer Status:</b> Verified Owner</div>
           <div class="profile-perk-item"><span class="icon">⚡</span> <b>God Pen:</b> Madara Uchiha (Susanoo Edition)</div>
           <div class="profile-perk-item"><span class="icon">🛡️</span> <b>Desk Immunity:</b> All pens 100% protected against loss</div>
           <div class="profile-perk-item"><span class="icon">🔓</span> <b>Armory:</b> All pens unlocked in pencil case</div>
@@ -199,37 +179,13 @@
   function openModal(sel) {
     const el = document.querySelector(sel);
     if (el) el.classList.remove('hidden');
+    const input = document.getElementById('googleEmailInput');
+    if (input) setTimeout(() => input.focus(), 50);
   }
 
   function closeModal(sel) {
     const el = document.querySelector(sel);
     if (el) el.classList.add('hidden');
-  }
-
-  // Setup Google Identity Services Button
-  function initGSI() {
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: '1058284557997-penfight.apps.googleusercontent.com',
-          callback: window.handleGoogleCredentialResponse,
-          auto_select: false
-        });
-        const gBtn = document.getElementById('g_id_signin');
-        if (gBtn) {
-          window.google.accounts.id.renderButton(gBtn, {
-            theme: 'outline',
-            size: 'large',
-            type: 'standard',
-            text: 'signin_with',
-            shape: 'rectangular',
-            logo_alignment: 'left'
-          });
-        }
-      } catch (e) {
-        console.warn('GSI init note:', e);
-      }
-    }
   }
 
   // Secret cheat code listener (for developer testing)
@@ -271,15 +227,15 @@
       };
     });
 
-    // Custom Google Email Form
-    const customForm = document.getElementById('customAuthForm');
-    if (customForm) {
-      customForm.onsubmit = e => {
+    // Google Sign-In Form Handler
+    const googleForm = document.getElementById('googleSignInForm');
+    if (googleForm) {
+      googleForm.onsubmit = e => {
         e.preventDefault();
-        const input = document.getElementById('customEmailInput');
+        const input = document.getElementById('googleEmailInput');
         if (input && input.value) {
           const email = input.value.trim();
-          handleAuthSuccess(email, email.split('@')[0]);
+          handleAuthSuccess(email);
           input.value = '';
         }
       };
@@ -296,9 +252,6 @@
         location.reload();
       };
     }
-
-    setTimeout(initGSI, 500);
-    setTimeout(initGSI, 1500);
   });
 
   if (document.readyState !== 'loading') {

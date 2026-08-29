@@ -4,13 +4,12 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LAST BENCH LEAGUE - Pen Fight Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Kalam:wght@400;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Kalam:wght@400;700&family=Oswald:wght@500;600;700&family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="overrides.css">
   <link rel="stylesheet" href="upgrade.css">
   <link rel="stylesheet" href="marathon.css">
   <link rel="stylesheet" href="auth.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="app">
@@ -85,28 +84,39 @@
 
     <!-- Google Authentication Modal -->
     <div class="modal-overlay hidden" id="authModal">
-      <div class="panel auth-panel">
-        <button class="paper-close" data-close-modal="authModal">×</button>
-        <div class="torn top"></div>
-        <p class="red-label">GOOGLE AUTHENTICATION</p>
-        <h2>DESK <em>IDENTITY</em></h2>
-        <p class="sub">Sign in with your Google account to sync your collection and progress.</p>
+      <div class="google-auth-card">
+        <button class="google-modal-close" data-close-modal="authModal" title="Close">✕</button>
         
-        <!-- Official Google GIS Button wrapper -->
-        <div class="google-btn-wrapper">
-          <div id="g_id_signin"></div>
+        <div class="google-card-header">
+          <svg class="google-logo-big" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <h2 class="google-title">Sign in</h2>
+          <p class="google-subtitle">with your Google Account to continue to <b>Last Bench</b></p>
         </div>
 
-        <div class="auth-divider"><span>OR SIGN IN WITH GOOGLE EMAIL</span></div>
+        <form id="googleSignInForm" class="google-form">
+          <div class="google-input-group">
+            <input type="email" id="googleEmailInput" class="google-input" placeholder=" " required autocomplete="email">
+            <label for="googleEmailInput" class="google-label">Email or phone</label>
+          </div>
+          
+          <div class="google-help-link">
+            <a href="#" onclick="event.preventDefault(); document.getElementById('googleEmailInput').focus();">Forgot email?</a>
+          </div>
 
-        <div class="custom-auth-section">
-          <form id="customAuthForm" class="custom-auth-form">
-            <input type="email" id="customEmailInput" placeholder="yourname@gmail.com" required>
-            <button type="submit" class="stamp-button-small">CONTINUE <span>→</span></button>
-          </form>
-        </div>
+          <p class="google-disclaimer">
+            To continue, Google will share your name, email address, and profile picture with Last Bench League.
+          </p>
 
-        <div class="torn bottom"></div>
+          <div class="google-form-actions">
+            <button type="button" class="google-btn-text" data-close-modal="authModal">Cancel</button>
+            <button type="submit" class="google-btn-primary">Next</button>
+          </div>
+        </form>
       </div>
     </div>
 
