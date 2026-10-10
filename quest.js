@@ -137,48 +137,89 @@ function endpoints(p) {
   ];
 }
 
+/* ---------- Rigid-body pen physics ----------
+   Units: px and radians per 60Hz frame. Each pen is a capsule (half-length
+   PEN_HALF, radius PEN_RADIUS) with mass and a rod's moment of inertia. */
+const PEN_HALF = 67, PEN_RADIUS = 9, FRAME_MS = 1000 / 60;
+const DESK = {
+  kinetic: .02,      // constant Coulomb drag (px/frame²) so pens stop crisply
+  viscous: .6,       // share of the pen's grip used as speed-proportional drag
+  axial: 1.2,        // sliding along the barrel scrubs more...
+  lateral: .92,      // ...than rolling sideways across it
+  spinDamp: .935, spinKinetic: .0007,
+  restitution: .38, godRestitution: .25, contactFriction: .22
+};
+
+function inertia(p) {
+  const m = PEN[p.id]?.mass || 1;
+  return m * (2 * PEN_HALF) * (2 * PEN_HALF) / 12;
+}
+
 function closest(a, b, c, d) {
   const ux = b.x - a.x, uy = b.y - a.y, vx = d.x - c.x, vy = d.y - c.y, wx = a.x - c.x, wy = a.y - c.y;
   const A = ux * ux + uy * uy, B = ux * vx + uy * vy, C = vx * vx + vy * vy, D = ux * wx + uy * wy, E = vx * wx + vy * wy, den = A * C - B * B;
+  const clamp = v => Math.max(0, Math.min(1, v));
   let sc, tc;
-  if (den < .0001) {
-    sc = 0;
-    tc = Math.max(0, Math.min(1, E / C));
+  if (den < 1e-4 * A * C) {
+    // Parallel barrels: contact sits in the middle of the overlapping span, not at an end.
+    const t0 = ((c.x - a.x) * ux + (c.y - a.y) * uy) / A, t1 = ((d.x - a.x) * ux + (d.y - a.y) * uy) / A;
+    const lo = Math.max(0, Math.min(t0, t1)), hi = Math.min(1, Math.max(t0, t1));
+    sc = lo <= hi ? (lo + hi) / 2 : (Math.min(t0, t1) > 1 ? 1 : 0);
+    tc = clamp(((a.x + ux * sc - c.x) * vx + (a.y + uy * sc - c.y) * vy) / C);
   } else {
-    sc = Math.max(0, Math.min(1, (B * E - C * D) / den));
-    tc = Math.max(0, Math.min(1, (A * E - B * D) / den));
+    sc = clamp((B * E - C * D) / den);
+    tc = clamp((A * E - B * D) / den);
+    // Re-project so both points are mutually closest after clamping.
+    sc = clamp(((c.x + vx * tc - a.x) * ux + (c.y + vy * tc - a.y) * uy) / A);
+    tc = clamp(((a.x + ux * sc - c.x) * vx + (a.y + uy * sc - c.y) * vy) / C);
   }
   return [{ x: a.x + ux * sc, y: a.y + uy * sc }, { x: c.x + vx * tc, y: c.y + vy * tc }, sc, tc];
 }
 
 function penCollision(a, b) {
   const ea = endpoints(a), eb = endpoints(b), hit = closest(ea[0], ea[1], eb[0], eb[1]);
-  const dx = hit[1].x - hit[0].x, dy = hit[1].y - hit[0].y, dist = Math.hypot(dx, dy), radius = 18;
-  if (dist > radius) return;
-  let nx = dist > .001 ? dx / dist : Math.cos(a.a + Math.PI / 2), ny = dist > .001 ? dy / dist : Math.sin(a.a + Math.PI / 2);
-  let push = (radius - dist) * .5;
-  a.x -= nx * push; b.x += nx * push;
-  a.y -= ny * push; b.y += ny * push;
-  const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-  if (closing >= 0) return;
-  
-  const ma = PEN[a.id]?.mass || 1, mb = PEN[b.id]?.mass || 1;
-  const aGod = PEN[a.id]?.isGod, bGod = PEN[b.id]?.isGod;
-  let restitution = (aGod || bGod) ? -1.15 : -.48;
-  const j = restitution * closing / (1 / ma + 1 / mb);
+  const dx = hit[1].x - hit[0].x, dy = hit[1].y - hit[0].y, dist = Math.hypot(dx, dy), reach = PEN_RADIUS * 2;
+  if (dist > reach) return;
+  const nx = dist > .001 ? dx / dist : -Math.sin(a.a), ny = dist > .001 ? dy / dist : Math.cos(a.a);
 
+  const ma = PEN[a.id]?.mass || 1, mb = PEN[b.id]?.mass || 1, ia = inertia(a), ib = inertia(b);
+  const wa = 1 / ma, wb = 1 / mb;
+  const aGod = PEN[a.id]?.isGod, bGod = PEN[b.id]?.isGod;
   const aMult = aGod ? 0.35 : (bGod ? 2.2 : 1.0);
   const bMult = bGod ? 0.35 : (aGod ? 2.2 : 1.0);
 
-  a.vx -= (j / ma * nx) * aMult;
-  a.vy -= (j / ma * ny) * aMult;
-  b.vx += (j / mb * nx) * bMult;
-  b.vy += (j / mb * ny) * bMult;
-  
-  a.av += j * (hit[2] - .5) * .018 * (PEN[a.id]?.spin || 1) * aMult;
-  b.av -= j * (hit[3] - .5) * .018 * (PEN[b.id]?.spin || 1) * bMult;
-  
-  tap(aGod || bGod ? .08 : .035);
+  // Separate the overlap by inverse mass so heavy pens barely get shoved.
+  const depth = reach - dist, sa = wa / (wa + wb), sb = wb / (wa + wb);
+  a.x -= nx * depth * sa; a.y -= ny * depth * sa;
+  b.x += nx * depth * sb; b.y += ny * depth * sb;
+
+  // Velocity of each pen at the contact point includes its spin (v + ω × r).
+  const px = (hit[0].x + hit[1].x) / 2, py = (hit[0].y + hit[1].y) / 2;
+  const rax = px - a.x, ray = py - a.y, rbx = px - b.x, rby = py - b.y;
+  const rvx = (b.vx - b.av * rby) - (a.vx - a.av * ray);
+  const rvy = (b.vy + b.av * rbx) - (a.vy + a.av * rax);
+  const closing = rvx * nx + rvy * ny;
+  if (closing >= 0) return;
+
+  // Normal impulse, accounting for how much of the hit turns into rotation.
+  const rna = rax * ny - ray * nx, rnb = rbx * ny - rby * nx;
+  const e = (aGod || bGod) ? DESK.godRestitution : DESK.restitution;
+  const jn = -(1 + e) * closing / (wa + wb + rna * rna / ia + rnb * rnb / ib);
+
+  // Coulomb friction along the contact tangent: glancing hits drag and twist pens.
+  const tx = -ny, ty = nx, slide = rvx * tx + rvy * ty;
+  const rta = rax * ty - ray * tx, rtb = rbx * ty - rby * tx;
+  const jtMax = jn * DESK.contactFriction;
+  const jt = Math.max(-jtMax, Math.min(jtMax, -slide / (wa + wb + rta * rta / ia + rtb * rtb / ib)));
+
+  const ix = nx * jn + tx * jt, iy = ny * jn + ty * jt;
+  a.vx -= ix * wa * aMult; a.vy -= iy * wa * aMult;
+  b.vx += ix * wb * bMult; b.vy += iy * wb * bMult;
+  a.av -= (rax * iy - ray * ix) / ia * aMult * Math.sqrt(PEN[a.id]?.spin || 1);
+  b.av += (rbx * iy - rby * ix) / ib * bMult * Math.sqrt(PEN[b.id]?.spin || 1);
+
+  // Click volume follows impact strength; resting contact stays silent.
+  if (jn > .15) tap(Math.min(aGod || bGod ? .1 : .06, .02 + jn * .008));
 }
 
 function ringOut(p) {
@@ -190,15 +231,29 @@ function settle() {
   return Math.hypot(me.vx, me.vy) < .045 && Math.hypot(enemy.vx, enemy.vy) < .045 && Math.abs(me.av) < .004 && Math.abs(enemy.av) < .004;
 }
 
-function move(p) {
-  p.x += p.vx;
-  p.y += p.vy;
-  p.a += p.av;
-  p.vx *= PEN[p.id]?.grip || 0.97;
-  p.vy *= PEN[p.id]?.grip || 0.97;
-  p.av *= .92;
-  p.trail.push([p.x, p.y]);
-  if (p.trail.length > 13) p.trail.shift();
+// Desk friction for one sub-step of `dt` frames: anisotropic (rolling across the
+// barrel is easier than sliding along it), part speed-proportional, part constant
+// so pens come to a definite stop instead of creeping.
+function deskFriction(p, dt) {
+  const g = PEN[p.id]?.grip || 0.97, c = Math.cos(p.a), s = Math.sin(p.a);
+  let along = p.vx * c + p.vy * s, across = -p.vx * s + p.vy * c;
+  const speed = Math.hypot(along, across);
+  if (speed > 0) {
+    const drag = (speed * (1 - g) * DESK.viscous + DESK.kinetic) * dt / speed;
+    along -= Math.sign(along) * Math.min(Math.abs(along), drag * DESK.axial * Math.abs(along));
+    across -= Math.sign(across) * Math.min(Math.abs(across), drag * DESK.lateral * Math.abs(across));
+    p.vx = along * c - across * s;
+    p.vy = along * s + across * c;
+  }
+  p.av *= Math.pow(DESK.spinDamp, dt);
+  p.av -= Math.sign(p.av) * Math.min(Math.abs(p.av), DESK.spinKinetic * dt);
+}
+
+function move(p, dt = 1) {
+  p.x += p.vx * dt;
+  p.y += p.vy * dt;
+  p.a += p.av * dt;
+  deskFriction(p, dt);
 }
 
 function botShot() {
@@ -289,23 +344,30 @@ function leagueResult(winner) {
   draw();
 }
 
-function leagueTick() {
-  if (!running || !battle) return;
-  const speed = Math.max(Math.hypot(me.vx, me.vy), Math.hypot(enemy.vx, enemy.vy));
-  const steps = Math.min(12, Math.max(1, Math.ceil(speed / 1.15)));
+let lastTick = 0, frameDebt = 0;
+
+// One fixed 60Hz frame, split into sub-steps small enough that neither the
+// barrel nor a spinning tip can skip through the other pen.
+function physicsFrame() {
+  const fastest = Math.max(...[me, enemy].map(p => Math.hypot(p.vx, p.vy) + Math.abs(p.av) * PEN_HALF));
+  const steps = Math.min(16, Math.max(1, Math.ceil(fastest / (PEN_RADIUS * .5))));
   for (let i = 0; i < steps && !roundDone; i++) {
-    for (const p of [me, enemy]) {
-      p.x += p.vx / steps;
-      p.y += p.vy / steps;
-      p.a += p.av / steps;
-      const g = PEN[p.id]?.grip || 0.97;
-      p.vx *= Math.pow(g, 1 / steps);
-      p.vy *= Math.pow(g, 1 / steps);
-      p.av *= Math.pow(.92, 1 / steps);
-    }
+    move(me, 1 / steps);
+    move(enemy, 1 / steps);
     penCollision(me, enemy);
     if (ringOut(me)) leagueRound('bot');
     else if (ringOut(enemy)) leagueRound('you');
+  }
+}
+
+function leagueTick(now = performance.now()) {
+  if (!running || !battle) return;
+  // Accumulate real time so the game plays at the same speed on 60/120/144Hz screens.
+  frameDebt = Math.min(frameDebt + (now - (lastTick || now)) / FRAME_MS, 4);
+  lastTick = now;
+  while (frameDebt >= 1 && !roundDone) {
+    physicsFrame();
+    frameDebt -= 1;
   }
   for (const p of [me, enemy]) {
     p.trail.push([p.x, p.y]);
@@ -339,6 +401,10 @@ function startLeagueRound() {
   roundDone = false;
   running = true;
   setObjective('YOUR TURN', 'Contact point controls drive and spin.');
+  // Only one loop may run; without this each new round stacked another one.
+  cancelAnimationFrame(leagueLoop);
+  lastTick = 0;
+  frameDebt = 1;
   leagueTick();
 }
 
